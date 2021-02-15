@@ -65,7 +65,15 @@ export class ImgurService {
   ) { }
 
   private postError() {
-    this.searchErrors.next({message: 'An error occurred while searching.'});
+    const url = window.document.URL.toLowerCase();
+    if (url.includes('localhost') || url.includes('127.0.0.0')) {
+      this.searchErrors.next({message:
+        'The Imgur APIs do not work properly when you access the dev server using the localhost url. ' +
+        'Try using your client\'s IP address instead.'
+      });
+    } else {
+      this.searchErrors.next({message: 'An error occurred while searching.'});
+    }
   }
 
   public searchMore() {

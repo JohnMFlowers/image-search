@@ -29,6 +29,7 @@ export class AppComponent {
       }
     });
     this.imgurService.searchErrors.subscribe(error => {
+      this.allowMore = false;
       this.searching = false;
       this.searchError = error.message;
     });
