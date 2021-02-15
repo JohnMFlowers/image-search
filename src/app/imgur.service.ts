@@ -13,6 +13,11 @@ export interface SearchResult {
   }[];
 }
 
+export interface SearchResults {
+  imageCount: number;
+  results: SearchResult[];
+}
+
 export interface SearchError {
   message: string;
 }
@@ -44,34 +49,52 @@ export class ImgurService {
   private clientId = '0d0f4697c0b4ec8';
   private apiUrl = 'https://api.imgur.com/3/gallery/';
   private thumbnailUrl = 'https://i.imgur.com/{0}_d.webp?shape=thumb';
+  private text = '';
+  private page = 1;
 
   private headers = new HttpHeaders({
     'Authorization': 'Client-ID ' + this.clientId,
     'Accept': 'application/json',
   });
 
-  public readonly searchResults = new Subject<SearchResult[]>();
+  public readonly searchResults = new Subject<SearchResults>();
   public readonly searchErrors = new Subject<SearchError>();
 
   public constructor(
     private httpClient: HttpClient,
   ) { }
 
-  public async search(text: string) {
-    const url = this.apiUrl + 'search';
+  private postError() {
+    this.searchErrors.next({message: 'An error occurred while searching.'});
+  }
+
+  public searchMore() {
+    this.page += 1;
+    this.doSearch();
+  }
+
+  public search(text: string) {
+    this.text = text;
+    this.page = 1;
+    this.doSearch();
+  }
+
+  private async doSearch() {
+    const url = this.apiUrl + 'search/' + this.page;
     const options = {
       headers: this.headers,
       params: {
-        q: text,
+        q: this.text,
       },
     };
     try {
       const response = await this.httpClient.get<ImgurResult>(url, options).toPromise();
-      console.log(response);
       if (response.success) {
-        const results: SearchResult[] = [];
+        const searchResults: SearchResults = {
+          imageCount: 0,
+          results: [],
+        };
         response.data.forEach(item => {
-          console.log(item);
           const result: SearchResult = {
             title: item.title,
             description: item.description,
@@ -97,19 +120,19 @@ export class ImgurService {
             });
           }
           if (result.images.length > 0) {
-            results.push(result);
+            searchResults.results.push(result);
+            searchResults.imageCount += result.images.length;
           }
         });
-        console.log(results);
-        this.searchResults.next(results);
+        this.searchResults.next(searchResults);
       } else {
-        this.searchErrors.next({message: `An error occurred while searching for '${text}'.`});
+        console.log(response);
+        this.postError();
       }
     } catch (e: any) {
-      this.searchErrors.next({message: `An error occurred while searching for '${text}'.`});
       console.log(e);
+      this.postError();
     }
-    console.log('');
   }
 
 }

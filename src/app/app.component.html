@@ -12,26 +12,34 @@
       Search for:
       <input name="searchInput" id="searchInput" (keyup.Enter)="search()" [formControl]="searchInput">
     </label>
+    &nbsp;
+    <img width="20px" height="20px" src="assets/search-icon.png" style="cursor: pointer;" (click)="search()"/>
   </div>
 
-  <h2>Search Results</h2>
-
-  <div style="display: flex; flex-direction: column;">
-    <div *ngFor="let result of searchResults">
-      <hr/>
-      <div>{{result.title}} {{result.description}}</div>
-      <div style="display: flex; flex-direction: row;">
-        <a *ngFor="let image of result.images" target="_blank" rel="noopener" rel="noreferrer" href={{image.url}}>
-          <div style="height: 200; width: 200; padding: 5px;">
-            <img src={{image.thumbnailUrl}}/>
-          </div>
-        </a>
+  <div *ngIf="searchResults" style="text-align: center;">
+    <h2>Search Results</h2>
+    <div>{{searchResults.imageCount}} images found:</div>
+    <hr/>
+    <div style="display: flex; flex-direction: column;">
+      <div *ngFor="let result of searchResults.results">
+        <div>{{result.title}} {{result.description}}</div>
+        <div style="display: flex; flex-direction: column;">
+          <a *ngFor="let image of result.images" target="_blank" rel="noopener" rel="noreferrer" href={{image.url}}>
+            <div style="height: 200; width: 200; padding: 5px;">
+              <img src={{image.thumbnailUrl}}/>
+            </div>
+          </a>
+        </div>
+        <hr/>
       </div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer>
-  </footer>
+  <div *ngIf="searchError" style="color: red; font-size: 12pt; text-align: center;">
+    {{searchError}}
+  </div>
+
+  <img src="assets/spinner.gif" *ngIf="searching" />
+  <button *ngIf="allowMore && !searching" (click)="searchMore()">Find More...</button>
 
 </div>

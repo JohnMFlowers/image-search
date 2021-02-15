@@ -1,7 +1,7 @@
-import { Component, AfterViewInit} from '@angular/core';
-import { FormControl, } from '@angular/forms';
+import { Component } from '@angular/core';
+import { FormControl } from '@angular/forms';
 
-import { ImgurService, SearchResult } from './imgur.service';
+import { ImgurService, SearchResult, SearchError, SearchResults } from './imgur.service';
 
 @Component({
   selector: 'app-root',
@@ -11,32 +11,42 @@ import { ImgurService, SearchResult } from './imgur.service';
 export class AppComponent {
 
   searchInput = new FormControl('cat');
-  searchResults: SearchResult[] = [];
+  searchResults?: SearchResults;
   searchError?: string;
+  searching = false;
+  allowMore = true;
 
   constructor(private imgurService: ImgurService,
   ) {
-    this.imgurService.searchResults.subscribe(
-      result => {
-        this.searchResults.push(...result);
-      },
-      error => {
-        this.searchError = error;
+    this.imgurService.searchResults.subscribe(results => {
+      this.searching = false;
+      this.allowMore = results.imageCount > 0;
+      if (this.searchResults) {
+        this.searchResults.imageCount += results.imageCount;
+        this.searchResults.results.push(...results.results);
+      } else {
+        this.searchResults = results;
       }
-    );
-    this.search();
-  }
-
-  afterViewInit() {
-    console.log('sdlfksdf')
+    });
+    this.imgurService.searchErrors.subscribe(error => {
+      this.searching = false;
+      this.searchError = error.message;
+    });
     this.search();
   }
 
   search() {
-    this.searchResults = [];
+    this.searching = true;
+    this.searchResults = undefined;
     this.searchError = undefined;
     const value = this.searchInput.value.trim();
     this.imgurService.search(value);
+  }
+
+  searchMore() {
+    this.searching = true;
+    this.searchError = undefined;
+    this.imgurService.searchMore();
   }
 
 }
